@@ -141,7 +141,7 @@ body { display:flex; flex-direction:column; max-width:480px; margin:0 auto; padd
     <div class="change-label">الباقي</div>
     <div style="display:flex;align-items:baseline;justify-content:center;gap:4px">
       <span class="change-amount" id="ch-change-amt">0</span>
-      <span class="change-cur" id="ch-change-cur">ل.س.ج</span>
+      <span class="change-cur" id="ch-change-cur">جديدة</span>
     </div>
     <p class="change-equiv" id="ch-change-equiv"></p>
   </div>
@@ -167,9 +167,9 @@ body { display:flex; flex-direction:column; max-width:480px; margin:0 auto; padd
   <div class="amount-display">
     <div style="display:flex;align-items:baseline;justify-content:center;gap:6px">
       <input type="number" inputmode="numeric" pattern="[0-9]*" class="amt-input" id="calc-input" placeholder="0" oninput="updateCalc()">
-      <span class="currency" id="calc-cur">ل.س.ج</span>
+      <span class="currency" id="calc-cur">جديدة</span>
     </div>
-    <p class="equiv" id="calc-equiv">= 0 ل.س</p>
+    <p class="equiv" id="calc-equiv">= 0 قديمة</p>
   </div>
 
   <div class="results" id="calc-results" style="display:none">
@@ -231,7 +231,7 @@ function renderBills(oldVal, billsEl, totalEl){
   var totalCount = 0;
 
   if(result.length === 0 && remaining > 0){
-    billsEl.innerHTML = '<div class="bill-warning">المبلغ أقل من أصغر ورقة نقدية (50 ل.س قديمة)</div>';
+    billsEl.innerHTML = '<div class="bill-warning">المبلغ أقل من أصغر ورقة نقدية (50 قديمة)</div>';
     totalEl.textContent = '';
     return;
   }
@@ -245,12 +245,12 @@ function renderBills(oldVal, billsEl, totalEl){
     billsEl.innerHTML +=
       '<div class="bill-row" style="background:'+bg+'">'+
       '<div class="bill-badge" style="background:'+badgeBg+';color:'+badgeColor+'">'+(isNew?'جديدة':'قديمة')+'</div>'+
-      '<div class="bill-info"><span class="denom">'+r.label+'</span><span class="unit">'+(isNew?'ل.س.ج':'ل.س')+'</span></div>'+
+      '<div class="bill-info"><span class="denom">'+r.label+'</span><span class="unit">'+(isNew?'جديدة':'قديمة')+'</span></div>'+
       '<div class="bill-count">&times; '+r.count+'</div></div>';
   });
 
   if(remaining > 0){
-    billsEl.innerHTML += '<div class="bill-warning">'+fmt(remaining)+' ل.س باقٍ (لا توجد ورقة أصغر)</div>';
+    billsEl.innerHTML += '<div class="bill-warning">'+fmt(remaining)+' قديمة باقٍ (لا توجد ورقة أصغر)</div>';
   }
   totalEl.textContent = totalCount + ' ورقة إجمالاً' + (remaining > 0 ? ' + باقٍ' : '');
 }
@@ -275,7 +275,7 @@ function setCur(m){
   calcCur = m;
   gel('tog-new').className = 'toggle-btn' + (m==='new'?' active':'');
   gel('tog-old').className = 'toggle-btn' + (m==='old'?' active':'');
-  gel('calc-cur').textContent = m==='new' ? 'ل.س.ج' : 'ل.س';
+  gel('calc-cur').textContent = m==='new' ? 'جديدة' : 'قديمة';
   gel('calc-input').value = '';
   updateCalc();
 }
@@ -288,9 +288,9 @@ function updateCalc(){
 
   var equivEl = gel('calc-equiv');
   if(calcCur==='new'){
-    equivEl.textContent = raw ? '= '+fmt(oldVal)+' ل.س (قديمة)' : '= 0 ل.س';
+    equivEl.textContent = raw ? '= '+fmt(oldVal)+' قديمة' : '= 0 قديمة';
   } else {
-    equivEl.textContent = raw ? '= '+fmt(newVal)+' ل.س.ج (جديدة)' : '= 0 ل.س.ج';
+    equivEl.textContent = raw ? '= '+fmt(newVal)+' جديدة' : '= 0 جديدة';
   }
 
   var resultsEl = gel('calc-results');
@@ -342,7 +342,7 @@ function updateChange(){
 
   // Show change in new SYP
   var changeNew = changeOld / 100;
-  gel('ch-change-cur').textContent = 'ل.س.ج';
+  gel('ch-change-cur').textContent = 'جديدة';
 
   if(changeOld < 0){
     changeAmtEl.textContent = fmt(Math.abs(changeNew)) + '−';
@@ -354,7 +354,7 @@ function updateChange(){
 
   changeAmtEl.textContent = fmt(changeNew);
   changeAmtEl.className = 'change-amount';
-  changeEquivEl.textContent = '= ' + fmt(changeOld) + ' ل.س (قديمة)';
+  changeEquivEl.textContent = '= ' + fmt(changeOld) + ' قديمة';
 
   if(changeOld === 0){
     resultsEl.style.display = 'none';
