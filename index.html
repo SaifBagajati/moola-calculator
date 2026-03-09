@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="حاسبة العملات">
+<meta name="theme-color" content="#F7F8FA">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="apple-touch-icon" href="icon.svg">
+<title>حاسبة العملات — مولا سوريا</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; font-family:'Noto Sans Arabic','DM Sans',system-ui,sans-serif; }
+html, body { height:100%; background:#F7F8FA; color:#0F1C2E; direction:rtl; text-align:right; -webkit-tap-highlight-color:transparent; }
+body { display:flex; flex-direction:column; max-width:480px; margin:0 auto; padding:env(safe-area-inset-top) 0 0; overflow-x:hidden; }
+
+/* Header */
+.header { padding:16px 20px 10px; text-align:center; }
+.header .logo { display:inline-flex; align-items:center; margin-bottom:6px; direction:ltr; }
+.header .logo-text { font-family:'DM Sans',system-ui,sans-serif !important; font-size:22px; font-weight:800; color:#0B1A2E; letter-spacing:-0.5px; line-height:1; }
+.header .logo-dot { display:inline-block; width:5px; height:5px; border-radius:50%; background:#00B856; margin-left:1px; vertical-align:super; }
+.header h1 { font-size:20px; font-weight:800; color:#0B1A2E; letter-spacing:-.3px; margin:0; }
+
+/* Currency toggle */
+.toggle-wrap { display:flex; background:#E8EBF0; border-radius:12px; padding:3px; margin:0 20px 12px; }
+.toggle-btn { flex:1; padding:10px; border-radius:10px; text-align:center; font-size:12px; font-weight:700; cursor:pointer; color:#5A6B7F; transition:all .2s; border:none; background:transparent; font-family:inherit; }
+.toggle-btn.active { color:#0B1A2E; background:#FFF; box-shadow:0 1px 3px rgba(0,0,0,.1); }
+
+/* Panels */
+.panel { display:none; flex-direction:column; flex:1; overflow-y:auto; padding-bottom:80px; }
+.panel.active { display:flex; }
+
+/* Shared input style */
+.amt-input { width:100%; border:none; outline:none; background:transparent; text-align:center; font-size:42px; font-weight:800; color:#0B1A2E; letter-spacing:-1px; direction:ltr; font-family:'DM Sans','Noto Sans Arabic',system-ui,sans-serif; }
+.amt-input::placeholder { color:#94A3B8; }
+.amt-input::-webkit-outer-spin-button,
+.amt-input::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+.amt-input[type=number] { -moz-appearance:textfield; }
+
+/* Calc mode display */
+.amount-display { text-align:center; padding:12px 20px 4px; direction:ltr; }
+.amount-display .currency { font-size:15px; font-weight:600; color:#94A3B8; }
+.amount-display .equiv { font-size:13px; color:#94A3B8; margin:4px 0 0; direction:ltr; }
+
+/* Change mode fields */
+.change-fields { padding:0 20px 8px; }
+.change-field { display:flex; align-items:center; gap:10px; padding:8px 14px; border-radius:12px; border:2px solid #E2E8F0; background:#FFF; margin-bottom:8px; transition:border-color .2s; }
+.change-field:focus-within { border-color:#00B856; }
+.change-field .field-label { font-size:12px; font-weight:600; color:#5A6B7F; white-space:nowrap; min-width:70px; }
+.change-field .field-input { flex:1; border:none; outline:none; background:transparent; text-align:left; direction:ltr; font-size:22px; font-weight:800; color:#0B1A2E; letter-spacing:-.5px; font-family:'DM Sans','Noto Sans Arabic',system-ui,sans-serif; }
+.change-field .field-input::placeholder { color:#94A3B8; }
+.change-field .field-input::-webkit-outer-spin-button,
+.change-field .field-input::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+.change-field .field-input[type=number] { -moz-appearance:textfield; }
+.change-field .field-cur { font-size:12px; font-weight:600; color:#94A3B8; direction:ltr; }
+
+/* Arrow between fields */
+.field-arrow { text-align:center; margin:-2px 0; color:#94A3B8; }
+
+/* Change result */
+.change-result { margin:0 20px 12px; padding:14px 16px; border-radius:14px; background:#0B1A2E; text-align:center; direction:ltr; }
+.change-result .change-label { font-size:12px; font-weight:600; color:rgba(255,255,255,.5); margin-bottom:4px; }
+.change-result .change-amount { font-size:32px; font-weight:800; color:#FFF; letter-spacing:-.5px; }
+.change-result .change-amount.negative { color:#E53E3E; }
+.change-result .change-cur { font-size:14px; font-weight:600; color:rgba(255,255,255,.4); margin-right:4px; }
+.change-result .change-equiv { font-size:12px; color:rgba(255,255,255,.35); margin-top:2px; }
+
+/* Results */
+.results { padding:0 20px 32px; }
+.results-header { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+.results-header .line { height:1px; flex:1; background:#E2E8F0; }
+.results-header .label { font-size:11px; font-weight:700; color:#94A3B8; letter-spacing:1px; white-space:nowrap; }
+.bill-row { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:10px; margin-bottom:5px; }
+.bill-badge { min-width:32px; height:24px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; }
+.bill-info { flex:1; display:flex; align-items:baseline; gap:4px; }
+.bill-info .denom { font-size:16px; font-weight:800; color:#0B1A2E; }
+.bill-info .unit { font-size:11px; color:#94A3B8; }
+.bill-count { font-size:15px; font-weight:700; color:#0B1A2E; }
+.bill-total { font-size:11px; color:#94A3B8; text-align:center; margin:10px 0 0; }
+.bill-warning { text-align:center; padding:12px; color:#F59E0B; font-size:13px; font-weight:600; }
+
+/* Bottom tab bar */
+.tabbar { position:fixed; bottom:0; left:0; right:0; background:#FFF; border-top:1px solid #E2E8F0; display:flex; justify-content:center; padding:0; z-index:100; }
+.tabbar-inner { display:flex; width:100%; max-width:480px; }
+.tab { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:10px 0 calc(10px + env(safe-area-inset-bottom)); cursor:pointer; border:none; background:transparent; font-family:inherit; transition:all .2s; }
+.tab .tab-icon { color:#94A3B8; transition:color .2s; }
+.tab .tab-label { font-size:10px; font-weight:600; color:#94A3B8; transition:color .2s; }
+.tab.active .tab-icon { color:#00B856; }
+.tab.active .tab-label { font-weight:700; color:#00B856; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">
+    <span class="logo-text">moola</span><span class="logo-dot"></span>
+  </div>
+  <h1 id="page-title">حاسبة العملات</h1>
+</div>
+
+<!-- ═══ CALC MODE ═══ -->
+<div class="panel active" id="panel-calc">
+  <div class="toggle-wrap">
+    <button class="toggle-btn active" id="tog-new" onclick="setCur('new')">جديدة (ل.س.ج)</button>
+    <button class="toggle-btn" id="tog-old" onclick="setCur('old')">قديمة (ل.س)</button>
+  </div>
+
+  <div class="amount-display">
+    <div style="display:flex;align-items:baseline;justify-content:center;gap:6px">
+      <input type="number" inputmode="numeric" pattern="[0-9]*" class="amt-input" id="calc-input" placeholder="0" oninput="updateCalc()">
+      <span class="currency" id="calc-cur">ل.س.ج</span>
+    </div>
+    <p class="equiv" id="calc-equiv">= 0 ل.س</p>
+  </div>
+
+  <div class="results" id="calc-results" style="display:none">
+    <div class="results-header">
+      <div class="line"></div>
+      <span class="label">تفاصيل الأوراق النقدية</span>
+      <div class="line"></div>
+    </div>
+    <div id="calc-bills"></div>
+    <p class="bill-total" id="calc-total"></p>
+  </div>
+</div>
+
+<!-- ═══ CHANGE MODE ═══ -->
+<div class="panel" id="panel-change">
+  <div class="toggle-wrap">
+    <button class="toggle-btn active" id="ch-tog-new" onclick="setChCur('new')">جديدة (ل.س.ج)</button>
+    <button class="toggle-btn" id="ch-tog-old" onclick="setChCur('old')">قديمة (ل.س)</button>
+  </div>
+
+  <div class="change-fields">
+    <div class="change-field">
+      <span class="field-label">المبلغ المطلوب</span>
+      <input type="number" inputmode="numeric" pattern="[0-9]*" class="field-input" id="ch-owed-input" placeholder="0" oninput="updateChange()">
+      <span class="field-cur" id="ch-owed-cur">ل.س.ج</span>
+    </div>
+    <div class="field-arrow">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </div>
+    <div class="change-field">
+      <span class="field-label">المبلغ المدفوع</span>
+      <input type="number" inputmode="numeric" pattern="[0-9]*" class="field-input" id="ch-paid-input" placeholder="0" oninput="updateChange()">
+      <span class="field-cur" id="ch-paid-cur">ل.س.ج</span>
+    </div>
+  </div>
+
+  <div class="change-result" id="ch-result" style="display:none">
+    <div class="change-label">الباقي</div>
+    <div style="display:flex;align-items:baseline;justify-content:center;gap:4px">
+      <span class="change-amount" id="ch-change-amt">0</span>
+      <span class="change-cur" id="ch-change-cur">ل.س.ج</span>
+    </div>
+    <p class="change-equiv" id="ch-change-equiv"></p>
+  </div>
+
+  <div class="results" id="ch-results" style="display:none">
+    <div class="results-header">
+      <div class="line"></div>
+      <span class="label">تفاصيل أوراق الباقي</span>
+      <div class="line"></div>
+    </div>
+    <div id="ch-bills"></div>
+    <p class="bill-total" id="ch-total"></p>
+  </div>
+</div>
+
+<!-- Bottom tab bar -->
+<div class="tabbar">
+  <div class="tabbar-inner">
+    <button class="tab active" id="tab-calc" onclick="switchApp('calc')">
+      <span class="tab-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="10" y2="10"/><line x1="14" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="10" y2="14"/><line x1="14" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="16" y2="18"/></svg></span>
+      <span class="tab-label">حاسبة العملات</span>
+    </button>
+    <button class="tab" id="tab-change" onclick="switchApp('change')">
+      <span class="tab-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></span>
+      <span class="tab-label">حاسبة الباقي</span>
+    </button>
+  </div>
+</div>
+
+<script>
+/* ── Shared ── */
+var BILLS = [
+  {old:50000, label:'500', type:'new'},
+  {old:20000, label:'200', type:'new'},
+  {old:10000, label:'100', type:'new'},
+  {old:5000,  label:'50',  type:'new'},
+  {old:2500,  label:'25',  type:'new'},
+  {old:2000,  label:'2,000', type:'old'},
+  {old:1000,  label:'10',  type:'new'},
+  {old:500,   label:'500', type:'old'},
+  {old:200,   label:'200', type:'old'},
+  {old:100,   label:'100', type:'old'},
+  {old:50,    label:'50',  type:'old'}
+];
+
+function fmt(n){ return n.toLocaleString('en-US'); }
+function gel(id){ return document.getElementById(id); }
+
+function renderBills(oldVal, billsEl, totalEl){
+  var remaining = oldVal;
+  var result = [];
+  BILLS.forEach(function(bill){
+    if(remaining >= bill.old){
+      var count = Math.floor(remaining / bill.old);
+      remaining -= count * bill.old;
+      result.push({count:count, label:bill.label, type:bill.type});
+    }
+  });
+  billsEl.innerHTML = '';
+  var totalCount = 0;
+
+  if(result.length === 0 && remaining > 0){
+    billsEl.innerHTML = '<div class="bill-warning">المبلغ أقل من أصغر ورقة نقدية (50 ل.س قديمة)</div>';
+    totalEl.textContent = '';
+    return;
+  }
+
+  result.forEach(function(r){
+    totalCount += r.count;
+    var isNew = r.type === 'new';
+    var bg = isNew ? '#E6F7EE' : '#F0F2F5';
+    var badgeColor = isNew ? '#00B856' : '#5A6B7F';
+    var badgeBg = isNew ? '#00B85615' : '#E2E8F0';
+    billsEl.innerHTML +=
+      '<div class="bill-row" style="background:'+bg+'">'+
+      '<div class="bill-badge" style="background:'+badgeBg+';color:'+badgeColor+'">'+(isNew?'جديدة':'قديمة')+'</div>'+
+      '<div class="bill-info"><span class="denom">'+r.label+'</span><span class="unit">'+(isNew?'ل.س.ج':'ل.س')+'</span></div>'+
+      '<div class="bill-count">&times; '+r.count+'</div></div>';
+  });
+
+  if(remaining > 0){
+    billsEl.innerHTML += '<div class="bill-warning">'+fmt(remaining)+' ل.س باقٍ (لا توجد ورقة أصغر)</div>';
+  }
+  totalEl.textContent = totalCount + ' ورقة إجمالاً' + (remaining > 0 ? ' + باقٍ' : '');
+}
+
+/* ── App Mode Switch ── */
+var appMode = 'calc';
+function switchApp(m){
+  appMode = m;
+  gel('tab-calc').className = 'tab' + (m==='calc'?' active':'');
+  gel('tab-change').className = 'tab' + (m==='change'?' active':'');
+  gel('panel-calc').className = 'panel' + (m==='calc'?' active':'');
+  gel('panel-change').className = 'panel' + (m==='change'?' active':'');
+  gel('page-title').textContent = m==='calc' ? 'حاسبة العملات' : 'حاسبة الباقي';
+}
+
+/* ══════════════════════════
+   CALC MODE
+   ══════════════════════════ */
+var calcCur = 'new';
+
+function setCur(m){
+  calcCur = m;
+  gel('tog-new').className = 'toggle-btn' + (m==='new'?' active':'');
+  gel('tog-old').className = 'toggle-btn' + (m==='old'?' active':'');
+  gel('calc-cur').textContent = m==='new' ? 'ل.س.ج' : 'ل.س';
+  gel('calc-input').value = '';
+  updateCalc();
+}
+
+function updateCalc(){
+  var raw = parseInt(gel('calc-input').value) || 0;
+
+  var oldVal = calcCur==='new' ? raw*100 : raw;
+  var newVal = calcCur==='new' ? raw : raw/100;
+
+  var equivEl = gel('calc-equiv');
+  if(calcCur==='new'){
+    equivEl.textContent = raw ? '= '+fmt(oldVal)+' ل.س (قديمة)' : '= 0 ل.س';
+  } else {
+    equivEl.textContent = raw ? '= '+fmt(newVal)+' ل.س.ج (جديدة)' : '= 0 ل.س.ج';
+  }
+
+  var resultsEl = gel('calc-results');
+  if(!raw){ resultsEl.style.display='none'; return; }
+  resultsEl.style.display='block';
+  renderBills(oldVal, gel('calc-bills'), gel('calc-total'));
+}
+
+/* ══════════════════════════
+   CHANGE MODE
+   ══════════════════════════ */
+var chCur = 'new';
+
+function setChCur(m){
+  chCur = m;
+  gel('ch-tog-new').className = 'toggle-btn' + (m==='new'?' active':'');
+  gel('ch-tog-old').className = 'toggle-btn' + (m==='old'?' active':'');
+  var curText = m==='new' ? 'ل.س.ج' : 'ل.س';
+  gel('ch-owed-cur').textContent = curText;
+  gel('ch-paid-cur').textContent = curText;
+  gel('ch-owed-input').value = '';
+  gel('ch-paid-input').value = '';
+  updateChange();
+}
+
+function updateChange(){
+  var owed = parseInt(gel('ch-owed-input').value) || 0;
+  var paid = parseInt(gel('ch-paid-input').value) || 0;
+
+  var resultEl = gel('ch-result');
+  var resultsEl = gel('ch-results');
+
+  if(!owed || !paid){
+    resultEl.style.display = 'none';
+    resultsEl.style.display = 'none';
+    return;
+  }
+
+  resultEl.style.display = 'block';
+  var change = paid - owed;
+  var changeAmtEl = gel('ch-change-amt');
+  var changeCurEl = gel('ch-change-cur');
+  var changeEquivEl = gel('ch-change-equiv');
+
+  changeCurEl.textContent = chCur==='new' ? 'ل.س.ج' : 'ل.س';
+
+  if(change < 0){
+    changeAmtEl.textContent = fmt(Math.abs(change)) + '−';
+    changeAmtEl.className = 'change-amount negative';
+    resultsEl.style.display = 'none';
+    changeEquivEl.textContent = 'المبلغ المدفوع أقل من المطلوب';
+    return;
+  }
+
+  changeAmtEl.textContent = fmt(change);
+  changeAmtEl.className = 'change-amount';
+
+  var oldVal = chCur==='new' ? change*100 : change;
+  var newVal = chCur==='new' ? change : change/100;
+
+  if(chCur==='new'){
+    changeEquivEl.textContent = '= '+fmt(oldVal)+' ل.س (قديمة)';
+  } else {
+    changeEquivEl.textContent = '= '+fmt(newVal)+' ل.س.ج (جديدة)';
+  }
+
+  if(change === 0){
+    resultsEl.style.display = 'none';
+    changeEquivEl.textContent = 'لا يوجد باقٍ';
+    return;
+  }
+
+  resultsEl.style.display = 'block';
+  renderBills(oldVal, gel('ch-bills'), gel('ch-total'));
+}
+
+/* ── PWA ── */
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(function(){});
+}
+</script>
+</body>
+</html>
