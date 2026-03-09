@@ -20,19 +20,20 @@ html.en * { font-family:'DM Sans',system-ui,sans-serif; }
 body { display:flex; flex-direction:column; max-width:480px; margin:0 auto; padding:env(safe-area-inset-top) 0 0; overflow-x:hidden; }
 
 /* Header */
-.header { padding:16px 20px 10px; display:flex; align-items:center; justify-content:space-between; }
-.header-right { display:flex; flex-direction:column; align-items:center; flex:1; }
+.header { padding:16px 20px 8px; text-align:center; position:relative; }
 .header .logo { display:inline-flex; align-items:center; margin-bottom:4px; direction:ltr; }
 .header .logo-text { font-family:'DM Sans',system-ui,sans-serif !important; font-size:22px; font-weight:800; color:#0B1A2E; letter-spacing:-0.5px; line-height:1; }
 .header .logo-dot { display:inline-block; width:5px; height:5px; border-radius:50%; background:#00B856; margin-left:1px; vertical-align:super; }
 .header h1 { font-size:20px; font-weight:800; color:#0B1A2E; letter-spacing:-.3px; margin:0; }
 
 /* Language toggle */
-.lang-toggle { padding:5px 10px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; color:#5A6B7F; border:1.5px solid #E2E8F0; background:#FFF; font-family:'DM Sans',system-ui,sans-serif !important; transition:all .2s; flex-shrink:0; }
+.lang-wrap { display:inline-flex; background:#F0F2F5; border-radius:10px; padding:2px; position:absolute; top:16px; right:20px; direction:ltr; }
+.lang-btn { padding:5px 10px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer; color:#94A3B8; border:none; background:transparent; font-family:'DM Sans',system-ui,sans-serif !important; transition:all .2s; white-space:nowrap; }
+.lang-btn.active { color:#0B1A2E; background:#FFF; box-shadow:0 1px 2px rgba(0,0,0,.08); }
 
 /* Currency toggle */
 .toggle-wrap { display:flex; background:#E8EBF0; border-radius:12px; padding:3px; margin:0 20px 12px; }
-.toggle-btn { flex:1; padding:10px; border-radius:10px; text-align:center; font-size:12px; font-weight:700; cursor:pointer; color:#5A6B7F; transition:all .2s; border:none; background:transparent; font-family:inherit; }
+.toggle-btn { flex:1; padding:12px; border-radius:10px; text-align:center; font-size:14px; font-weight:700; cursor:pointer; color:#5A6B7F; transition:all .2s; border:none; background:transparent; font-family:inherit; }
 .toggle-btn.active { color:#0B1A2E; background:#FFF; box-shadow:0 1px 3px rgba(0,0,0,.1); }
 
 /* Panels */
@@ -55,9 +56,9 @@ body { display:flex; flex-direction:column; max-width:480px; margin:0 auto; padd
 .change-fields { padding:0 20px 8px; }
 .change-field-group { margin-bottom:8px; }
 .field-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
-.field-header .field-label { font-size:13px; font-weight:700; color:#5A6B7F; }
-.field-cur-toggle { display:flex; background:#F0F2F5; border-radius:8px; padding:2px; }
-.field-cur-btn { padding:4px 10px; border-radius:6px; font-size:11px; font-weight:700; cursor:pointer; color:#94A3B8; border:none; background:transparent; font-family:inherit; transition:all .2s; white-space:nowrap; }
+.field-header .field-label { font-size:14px; font-weight:700; color:#5A6B7F; }
+.field-cur-toggle { display:flex; background:#F0F2F5; border-radius:10px; padding:2px; }
+.field-cur-btn { padding:7px 14px; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; color:#94A3B8; border:none; background:transparent; font-family:inherit; transition:all .2s; white-space:nowrap; }
 .field-cur-btn.active { color:#0B1A2E; background:#FFF; box-shadow:0 1px 2px rgba(0,0,0,.08); }
 .change-field { display:flex; align-items:center; padding:10px 14px; border-radius:12px; border:2px solid #E2E8F0; background:#FFF; transition:border-color .2s; }
 .change-field:focus-within { border-color:#00B856; }
@@ -97,7 +98,7 @@ body { display:flex; flex-direction:column; max-width:480px; margin:0 auto; padd
 .tabbar-inner { display:flex; width:100%; max-width:480px; }
 .tab { flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:10px 0 calc(10px + env(safe-area-inset-bottom)); cursor:pointer; border:none; background:transparent; font-family:inherit; transition:all .2s; }
 .tab .tab-icon { color:#94A3B8; transition:color .2s; }
-.tab .tab-label { font-size:10px; font-weight:600; color:#94A3B8; transition:color .2s; }
+.tab .tab-label { font-size:11px; font-weight:600; color:#94A3B8; transition:color .2s; }
 .tab.active .tab-icon { color:#00B856; }
 .tab.active .tab-label { font-weight:700; color:#00B856; }
 
@@ -114,14 +115,14 @@ body { display:flex; flex-direction:column; max-width:480px; margin:0 auto; padd
 <body>
 
 <div class="header">
-  <button class="lang-toggle" id="lang-btn" onclick="toggleLang()">EN</button>
-  <div class="header-right">
-    <div class="logo">
-      <span class="logo-text">moola</span><span class="logo-dot"></span>
-    </div>
-    <h1 id="page-title">حاسبة الباقي</h1>
+  <div class="lang-wrap">
+    <button class="lang-btn active" id="lang-ar" onclick="setLang('ar')">عربي</button>
+    <button class="lang-btn" id="lang-en" onclick="setLang('en')">English</button>
   </div>
-  <div style="width:40px"></div>
+  <div class="logo">
+    <span class="logo-text">moola</span><span class="logo-dot"></span>
+  </div>
+  <h1 id="page-title">حاسبة الباقي</h1>
 </div>
 
 <!-- ═══ CHANGE MODE (default) ═══ -->
@@ -244,7 +245,6 @@ var T = {
     remainder: ' قديمة باقٍ (لا توجد ورقة أصغر)',
     billsTotal: ' ورقة إجمالاً',
     plusRemainder: ' + باقٍ',
-    langBtn: 'EN',
     installText: 'لتثبيت التطبيق، اضغط <svg class="ib-share" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> ثم <strong>إضافة للشاشة الرئيسية</strong>'
   },
   en: {
@@ -265,7 +265,6 @@ var T = {
     remainder: ' Old remainder (no smaller bill)',
     billsTotal: ' bills total',
     plusRemainder: ' + remainder',
-    langBtn: 'عربي',
     installText: 'To install, tap <svg class="ib-share" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> then <strong>Add to Home Screen</strong>'
   }
 };
@@ -280,7 +279,8 @@ function applyLang(){
   html.dir = lang==='ar' ? 'rtl' : 'ltr';
   html.className = lang==='en' ? 'en' : '';
 
-  gel('lang-btn').textContent = t('langBtn');
+  gel('lang-ar').className = 'lang-btn' + (lang==='ar'?' active':'');
+  gel('lang-en').className = 'lang-btn' + (lang==='en'?' active':'');
 
   // Update all data-t elements
   document.querySelectorAll('[data-t]').forEach(function(el){
@@ -298,8 +298,8 @@ function applyLang(){
   updateChange();
 }
 
-function toggleLang(){
-  lang = lang==='ar' ? 'en' : 'ar';
+function setLang(l){
+  lang = l;
   localStorage.setItem('lang', lang);
   applyLang();
 }
