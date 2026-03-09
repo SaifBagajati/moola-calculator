@@ -15,14 +15,20 @@
 <style>
 * { margin:0; padding:0; box-sizing:border-box; font-family:'Noto Sans Arabic','DM Sans',system-ui,sans-serif; }
 html, body { height:100%; background:#F7F8FA; color:#0F1C2E; direction:rtl; text-align:right; -webkit-tap-highlight-color:transparent; }
+html.en, html.en body { direction:ltr; text-align:left; }
+html.en * { font-family:'DM Sans',system-ui,sans-serif; }
 body { display:flex; flex-direction:column; max-width:480px; margin:0 auto; padding:env(safe-area-inset-top) 0 0; overflow-x:hidden; }
 
 /* Header */
-.header { padding:16px 20px 10px; text-align:center; }
-.header .logo { display:inline-flex; align-items:center; margin-bottom:6px; direction:ltr; }
+.header { padding:16px 20px 10px; display:flex; align-items:center; justify-content:space-between; }
+.header-right { display:flex; flex-direction:column; align-items:center; flex:1; }
+.header .logo { display:inline-flex; align-items:center; margin-bottom:4px; direction:ltr; }
 .header .logo-text { font-family:'DM Sans',system-ui,sans-serif !important; font-size:22px; font-weight:800; color:#0B1A2E; letter-spacing:-0.5px; line-height:1; }
 .header .logo-dot { display:inline-block; width:5px; height:5px; border-radius:50%; background:#00B856; margin-left:1px; vertical-align:super; }
 .header h1 { font-size:20px; font-weight:800; color:#0B1A2E; letter-spacing:-.3px; margin:0; }
+
+/* Language toggle */
+.lang-toggle { padding:5px 10px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; color:#5A6B7F; border:1.5px solid #E2E8F0; background:#FFF; font-family:'DM Sans',system-ui,sans-serif !important; transition:all .2s; flex-shrink:0; }
 
 /* Currency toggle */
 .toggle-wrap { display:flex; background:#E8EBF0; border-radius:12px; padding:3px; margin:0 20px 12px; }
@@ -108,10 +114,14 @@ body { display:flex; flex-direction:column; max-width:480px; margin:0 auto; padd
 <body>
 
 <div class="header">
-  <div class="logo">
-    <span class="logo-text">moola</span><span class="logo-dot"></span>
+  <button class="lang-toggle" id="lang-btn" onclick="toggleLang()">EN</button>
+  <div class="header-right">
+    <div class="logo">
+      <span class="logo-text">moola</span><span class="logo-dot"></span>
+    </div>
+    <h1 id="page-title">حاسبة الباقي</h1>
   </div>
-  <h1 id="page-title">حاسبة الباقي</h1>
+  <div style="width:40px"></div>
 </div>
 
 <!-- ═══ CHANGE MODE (default) ═══ -->
@@ -119,10 +129,10 @@ body { display:flex; flex-direction:column; max-width:480px; margin:0 auto; padd
   <div class="change-fields">
     <div class="change-field-group">
       <div class="field-header">
-        <span class="field-label">المبلغ المطلوب</span>
+        <span class="field-label" data-t="owed">المبلغ المطلوب</span>
         <div class="field-cur-toggle">
-          <button class="field-cur-btn active" id="owed-cur-new" onclick="setFieldCur('owed','new')">جديدة</button>
-          <button class="field-cur-btn" id="owed-cur-old" onclick="setFieldCur('owed','old')">قديمة</button>
+          <button class="field-cur-btn active" id="owed-cur-new" onclick="setFieldCur('owed','new')" data-t="new">جديدة</button>
+          <button class="field-cur-btn" id="owed-cur-old" onclick="setFieldCur('owed','old')" data-t="old">قديمة</button>
         </div>
       </div>
       <div class="change-field">
@@ -134,10 +144,10 @@ body { display:flex; flex-direction:column; max-width:480px; margin:0 auto; padd
     </div>
     <div class="change-field-group">
       <div class="field-header">
-        <span class="field-label">المبلغ المدفوع</span>
+        <span class="field-label" data-t="paid">المبلغ المدفوع</span>
         <div class="field-cur-toggle">
-          <button class="field-cur-btn active" id="paid-cur-new" onclick="setFieldCur('paid','new')">جديدة</button>
-          <button class="field-cur-btn" id="paid-cur-old" onclick="setFieldCur('paid','old')">قديمة</button>
+          <button class="field-cur-btn active" id="paid-cur-new" onclick="setFieldCur('paid','new')" data-t="new">جديدة</button>
+          <button class="field-cur-btn" id="paid-cur-old" onclick="setFieldCur('paid','old')" data-t="old">قديمة</button>
         </div>
       </div>
       <div class="change-field">
@@ -147,7 +157,7 @@ body { display:flex; flex-direction:column; max-width:480px; margin:0 auto; padd
   </div>
 
   <div class="change-result" id="ch-result" style="display:none">
-    <div class="change-label">الباقي</div>
+    <div class="change-label" data-t="changeLabel">الباقي</div>
     <div style="display:flex;align-items:baseline;justify-content:center;gap:4px">
       <span class="change-amount" id="ch-change-amt">0</span>
       <span class="change-cur" id="ch-change-cur">جديدة</span>
@@ -158,7 +168,7 @@ body { display:flex; flex-direction:column; max-width:480px; margin:0 auto; padd
   <div class="results" id="ch-results" style="display:none">
     <div class="results-header">
       <div class="line"></div>
-      <span class="label">تفاصيل أوراق الباقي</span>
+      <span class="label" data-t="changeBills">تفاصيل أوراق الباقي</span>
       <div class="line"></div>
     </div>
     <div id="ch-bills"></div>
@@ -169,8 +179,8 @@ body { display:flex; flex-direction:column; max-width:480px; margin:0 auto; padd
 <!-- ═══ CALC MODE ═══ -->
 <div class="panel" id="panel-calc">
   <div class="toggle-wrap">
-    <button class="toggle-btn active" id="tog-new" onclick="setCur('new')">جديدة</button>
-    <button class="toggle-btn" id="tog-old" onclick="setCur('old')">قديمة</button>
+    <button class="toggle-btn active" id="tog-new" onclick="setCur('new')" data-t="new">جديدة</button>
+    <button class="toggle-btn" id="tog-old" onclick="setCur('old')" data-t="old">قديمة</button>
   </div>
 
   <div class="amount-display">
@@ -184,7 +194,7 @@ body { display:flex; flex-direction:column; max-width:480px; margin:0 auto; padd
   <div class="results" id="calc-results" style="display:none">
     <div class="results-header">
       <div class="line"></div>
-      <span class="label">تفاصيل الأوراق النقدية</span>
+      <span class="label" data-t="calcBills">تفاصيل الأوراق النقدية</span>
       <div class="line"></div>
     </div>
     <div id="calc-bills"></div>
@@ -197,11 +207,11 @@ body { display:flex; flex-direction:column; max-width:480px; margin:0 auto; padd
   <div class="tabbar-inner">
     <button class="tab active" id="tab-change" onclick="switchApp('change')">
       <span class="tab-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v2"/><rect x="2" y="9" width="20" height="4" rx="1"/><path d="M5 13v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"/><line x1="9" y1="9" x2="9" y2="5"/><line x1="15" y1="9" x2="15" y2="5"/><rect x="8" y="16" width="8" height="2" rx="0.5"/></svg></span>
-      <span class="tab-label">حاسبة الباقي</span>
+      <span class="tab-label" data-t="tabChange">حاسبة الباقي</span>
     </button>
     <button class="tab" id="tab-calc" onclick="switchApp('calc')">
       <span class="tab-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M2 9h2"/><path d="M20 9h2"/><path d="M2 15h2"/><path d="M20 15h2"/></svg></span>
-      <span class="tab-label">حاسبة العملات</span>
+      <span class="tab-label" data-t="tabCalc">حاسبة العملات</span>
     </button>
   </div>
 </div>
@@ -209,11 +219,91 @@ body { display:flex; flex-direction:column; max-width:480px; margin:0 auto; padd
 <!-- Install banner (iOS) -->
 <div class="install-banner" id="install-banner" style="display:none">
   <div class="ib-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
-  <div class="ib-text">لتثبيت التطبيق، اضغط <svg class="ib-share" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> ثم <strong>إضافة للشاشة الرئيسية</strong></div>
+  <div class="ib-text" id="install-text">لتثبيت التطبيق، اضغط <svg class="ib-share" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> ثم <strong>إضافة للشاشة الرئيسية</strong></div>
   <button class="ib-close" onclick="dismissInstall()">&times;</button>
 </div>
 
 <script>
+/* ── i18n ── */
+var T = {
+  ar: {
+    titleChange: 'حاسبة الباقي',
+    titleCalc: 'حاسبة العملات',
+    owed: 'المبلغ المطلوب',
+    paid: 'المبلغ المدفوع',
+    'new': 'جديدة',
+    old: 'قديمة',
+    changeLabel: 'الباقي',
+    changeBills: 'تفاصيل أوراق الباقي',
+    calcBills: 'تفاصيل الأوراق النقدية',
+    tabChange: 'حاسبة الباقي',
+    tabCalc: 'حاسبة العملات',
+    paidLess: 'المبلغ المدفوع أقل من المطلوب',
+    noChange: 'لا يوجد باقٍ',
+    tooSmall: 'المبلغ أقل من أصغر ورقة نقدية (50 قديمة)',
+    remainder: ' قديمة باقٍ (لا توجد ورقة أصغر)',
+    billsTotal: ' ورقة إجمالاً',
+    plusRemainder: ' + باقٍ',
+    langBtn: 'EN',
+    installText: 'لتثبيت التطبيق، اضغط <svg class="ib-share" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> ثم <strong>إضافة للشاشة الرئيسية</strong>'
+  },
+  en: {
+    titleChange: 'Change Calculator',
+    titleCalc: 'Currency Calculator',
+    owed: 'Amount Owed',
+    paid: 'Amount Paid',
+    'new': 'New',
+    old: 'Old',
+    changeLabel: 'Change',
+    changeBills: 'Change Breakdown',
+    calcBills: 'Bill Breakdown',
+    tabChange: 'Change',
+    tabCalc: 'Currency',
+    paidLess: 'Amount paid is less than owed',
+    noChange: 'No change',
+    tooSmall: 'Amount is less than smallest bill (50 Old)',
+    remainder: ' Old remainder (no smaller bill)',
+    billsTotal: ' bills total',
+    plusRemainder: ' + remainder',
+    langBtn: 'عربي',
+    installText: 'To install, tap <svg class="ib-share" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> then <strong>Add to Home Screen</strong>'
+  }
+};
+
+var lang = localStorage.getItem('lang') || 'ar';
+
+function t(key){ return T[lang][key]; }
+
+function applyLang(){
+  var html = document.documentElement;
+  html.lang = lang;
+  html.dir = lang==='ar' ? 'rtl' : 'ltr';
+  html.className = lang==='en' ? 'en' : '';
+
+  gel('lang-btn').textContent = t('langBtn');
+
+  // Update all data-t elements
+  document.querySelectorAll('[data-t]').forEach(function(el){
+    el.textContent = t(el.getAttribute('data-t'));
+  });
+
+  // Update page title
+  gel('page-title').textContent = appMode==='calc' ? t('titleCalc') : t('titleChange');
+
+  // Install banner
+  gel('install-text').innerHTML = t('installText');
+
+  // Re-run dynamic text
+  updateCalc();
+  updateChange();
+}
+
+function toggleLang(){
+  lang = lang==='ar' ? 'en' : 'ar';
+  localStorage.setItem('lang', lang);
+  applyLang();
+}
+
 /* ── Install banner logic ── */
 (function(){
   var isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
@@ -261,7 +351,7 @@ function renderBills(oldVal, billsEl, totalEl){
   var totalCount = 0;
 
   if(result.length === 0 && remaining > 0){
-    billsEl.innerHTML = '<div class="bill-warning">المبلغ أقل من أصغر ورقة نقدية (50 قديمة)</div>';
+    billsEl.innerHTML = '<div class="bill-warning">'+t('tooSmall')+'</div>';
     totalEl.textContent = '';
     return;
   }
@@ -274,15 +364,15 @@ function renderBills(oldVal, billsEl, totalEl){
     var badgeBg = isNew ? '#00B85615' : '#E2E8F0';
     billsEl.innerHTML +=
       '<div class="bill-row" style="background:'+bg+'">'+
-      '<div class="bill-badge" style="background:'+badgeBg+';color:'+badgeColor+'">'+(isNew?'جديدة':'قديمة')+'</div>'+
-      '<div class="bill-info"><span class="denom">'+r.label+'</span><span class="unit">'+(isNew?'جديدة':'قديمة')+'</span></div>'+
+      '<div class="bill-badge" style="background:'+badgeBg+';color:'+badgeColor+'">'+(isNew?t('new'):t('old'))+'</div>'+
+      '<div class="bill-info"><span class="denom">'+r.label+'</span><span class="unit">'+(isNew?t('new'):t('old'))+'</span></div>'+
       '<div class="bill-count">&times; '+r.count+'</div></div>';
   });
 
   if(remaining > 0){
-    billsEl.innerHTML += '<div class="bill-warning">'+fmt(remaining)+' قديمة باقٍ (لا توجد ورقة أصغر)</div>';
+    billsEl.innerHTML += '<div class="bill-warning">'+fmt(remaining)+t('remainder')+'</div>';
   }
-  totalEl.textContent = totalCount + ' ورقة إجمالاً' + (remaining > 0 ? ' + باقٍ' : '');
+  totalEl.textContent = totalCount + t('billsTotal') + (remaining > 0 ? t('plusRemainder') : '');
 }
 
 /* ── App Mode Switch ── */
@@ -293,7 +383,7 @@ function switchApp(m){
   gel('tab-change').className = 'tab' + (m==='change'?' active':'');
   gel('panel-calc').className = 'panel' + (m==='calc'?' active':'');
   gel('panel-change').className = 'panel' + (m==='change'?' active':'');
-  gel('page-title').textContent = m==='calc' ? 'حاسبة العملات' : 'حاسبة الباقي';
+  gel('page-title').textContent = m==='calc' ? t('titleCalc') : t('titleChange');
 }
 
 /* ══════════════════════════
@@ -305,7 +395,7 @@ function setCur(m){
   calcCur = m;
   gel('tog-new').className = 'toggle-btn' + (m==='new'?' active':'');
   gel('tog-old').className = 'toggle-btn' + (m==='old'?' active':'');
-  gel('calc-cur').textContent = m==='new' ? 'جديدة' : 'قديمة';
+  gel('calc-cur').textContent = m==='new' ? t('new') : t('old');
   gel('calc-input').value = '';
   updateCalc();
 }
@@ -318,9 +408,9 @@ function updateCalc(){
 
   var equivEl = gel('calc-equiv');
   if(calcCur==='new'){
-    equivEl.textContent = raw ? '= '+fmt(oldVal)+' قديمة' : '= 0 قديمة';
+    equivEl.textContent = raw ? '= '+fmt(oldVal)+' '+t('old') : '= 0 '+t('old');
   } else {
-    equivEl.textContent = raw ? '= '+fmt(newVal)+' جديدة' : '= 0 جديدة';
+    equivEl.textContent = raw ? '= '+fmt(newVal)+' '+t('new') : '= 0 '+t('new');
   }
 
   var resultsEl = gel('calc-results');
@@ -361,7 +451,6 @@ function updateChange(){
     return;
   }
 
-  // Normalize both to old SYP for comparison
   var owedOld = toOld(owedRaw, owedCur);
   var paidOld = toOld(paidRaw, paidCur);
   var changeOld = paidOld - owedOld;
@@ -370,31 +459,33 @@ function updateChange(){
   var changeAmtEl = gel('ch-change-amt');
   var changeEquivEl = gel('ch-change-equiv');
 
-  // Show change in new SYP
   var changeNew = changeOld / 100;
-  gel('ch-change-cur').textContent = 'جديدة';
+  gel('ch-change-cur').textContent = t('new');
 
   if(changeOld < 0){
     changeAmtEl.textContent = fmt(Math.abs(changeNew)) + '−';
     changeAmtEl.className = 'change-amount negative';
     resultsEl.style.display = 'none';
-    changeEquivEl.textContent = 'المبلغ المدفوع أقل من المطلوب';
+    changeEquivEl.textContent = t('paidLess');
     return;
   }
 
   changeAmtEl.textContent = fmt(changeNew);
   changeAmtEl.className = 'change-amount';
-  changeEquivEl.textContent = '= ' + fmt(changeOld) + ' قديمة';
+  changeEquivEl.textContent = '= ' + fmt(changeOld) + ' ' + t('old');
 
   if(changeOld === 0){
     resultsEl.style.display = 'none';
-    changeEquivEl.textContent = 'لا يوجد باقٍ';
+    changeEquivEl.textContent = t('noChange');
     return;
   }
 
   resultsEl.style.display = 'block';
   renderBills(changeOld, gel('ch-bills'), gel('ch-total'));
 }
+
+/* ── Init ── */
+applyLang();
 
 /* ── PWA ── */
 if('serviceWorker' in navigator){
