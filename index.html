@@ -47,7 +47,8 @@ body { display:flex; flex-direction:column; max-width:480px; margin:0 auto; padd
 
 /* Change mode fields */
 .change-fields { padding:0 20px 8px; }
-.change-field { display:flex; align-items:center; gap:10px; padding:8px 14px; border-radius:12px; border:2px solid #E2E8F0; background:#FFF; margin-bottom:8px; transition:border-color .2s; }
+.change-field-group { margin-bottom:8px; }
+.change-field { display:flex; align-items:center; gap:10px; padding:8px 14px; border-radius:12px; border:2px solid #E2E8F0; background:#FFF; transition:border-color .2s; }
 .change-field:focus-within { border-color:#00B856; }
 .change-field .field-label { font-size:12px; font-weight:600; color:#5A6B7F; white-space:nowrap; min-width:70px; }
 .change-field .field-input { flex:1; border:none; outline:none; background:transparent; text-align:left; direction:ltr; font-size:22px; font-weight:800; color:#0B1A2E; letter-spacing:-.5px; font-family:'DM Sans','Noto Sans Arabic',system-ui,sans-serif; }
@@ -55,10 +56,14 @@ body { display:flex; flex-direction:column; max-width:480px; margin:0 auto; padd
 .change-field .field-input::-webkit-outer-spin-button,
 .change-field .field-input::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
 .change-field .field-input[type=number] { -moz-appearance:textfield; }
-.change-field .field-cur { font-size:12px; font-weight:600; color:#94A3B8; direction:ltr; }
+
+/* Per-field currency toggle */
+.field-cur-toggle { display:flex; background:#F0F2F5; border-radius:8px; padding:2px; flex-shrink:0; }
+.field-cur-btn { padding:5px 8px; border-radius:6px; font-size:10px; font-weight:700; cursor:pointer; color:#94A3B8; border:none; background:transparent; font-family:inherit; transition:all .2s; white-space:nowrap; }
+.field-cur-btn.active { color:#0B1A2E; background:#FFF; box-shadow:0 1px 2px rgba(0,0,0,.08); }
 
 /* Arrow between fields */
-.field-arrow { text-align:center; margin:-2px 0; color:#94A3B8; }
+.field-arrow { text-align:center; margin:4px 0; color:#94A3B8; }
 
 /* Change result */
 .change-result { margin:0 20px 12px; padding:14px 16px; border-radius:14px; background:#0B1A2E; text-align:center; direction:ltr; }
@@ -98,11 +103,59 @@ body { display:flex; flex-direction:column; max-width:480px; margin:0 auto; padd
   <div class="logo">
     <span class="logo-text">moola</span><span class="logo-dot"></span>
   </div>
-  <h1 id="page-title">حاسبة العملات</h1>
+  <h1 id="page-title">حاسبة الباقي</h1>
+</div>
+
+<!-- ═══ CHANGE MODE (default) ═══ -->
+<div class="panel active" id="panel-change">
+  <div class="change-fields">
+    <div class="change-field-group">
+      <div class="change-field">
+        <span class="field-label">المبلغ المطلوب</span>
+        <input type="number" inputmode="numeric" pattern="[0-9]*" class="field-input" id="ch-owed-input" placeholder="0" oninput="updateChange()">
+        <div class="field-cur-toggle">
+          <button class="field-cur-btn active" id="owed-cur-new" onclick="setFieldCur('owed','new')">ل.س.ج</button>
+          <button class="field-cur-btn" id="owed-cur-old" onclick="setFieldCur('owed','old')">ل.س</button>
+        </div>
+      </div>
+    </div>
+    <div class="field-arrow">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </div>
+    <div class="change-field-group">
+      <div class="change-field">
+        <span class="field-label">المبلغ المدفوع</span>
+        <input type="number" inputmode="numeric" pattern="[0-9]*" class="field-input" id="ch-paid-input" placeholder="0" oninput="updateChange()">
+        <div class="field-cur-toggle">
+          <button class="field-cur-btn active" id="paid-cur-new" onclick="setFieldCur('paid','new')">ل.س.ج</button>
+          <button class="field-cur-btn" id="paid-cur-old" onclick="setFieldCur('paid','old')">ل.س</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="change-result" id="ch-result" style="display:none">
+    <div class="change-label">الباقي</div>
+    <div style="display:flex;align-items:baseline;justify-content:center;gap:4px">
+      <span class="change-amount" id="ch-change-amt">0</span>
+      <span class="change-cur" id="ch-change-cur">ل.س.ج</span>
+    </div>
+    <p class="change-equiv" id="ch-change-equiv"></p>
+  </div>
+
+  <div class="results" id="ch-results" style="display:none">
+    <div class="results-header">
+      <div class="line"></div>
+      <span class="label">تفاصيل أوراق الباقي</span>
+      <div class="line"></div>
+    </div>
+    <div id="ch-bills"></div>
+    <p class="bill-total" id="ch-total"></p>
+  </div>
 </div>
 
 <!-- ═══ CALC MODE ═══ -->
-<div class="panel active" id="panel-calc">
+<div class="panel" id="panel-calc">
   <div class="toggle-wrap">
     <button class="toggle-btn active" id="tog-new" onclick="setCur('new')">جديدة (ل.س.ج)</button>
     <button class="toggle-btn" id="tog-old" onclick="setCur('old')">قديمة (ل.س)</button>
@@ -127,59 +180,16 @@ body { display:flex; flex-direction:column; max-width:480px; margin:0 auto; padd
   </div>
 </div>
 
-<!-- ═══ CHANGE MODE ═══ -->
-<div class="panel" id="panel-change">
-  <div class="toggle-wrap">
-    <button class="toggle-btn active" id="ch-tog-new" onclick="setChCur('new')">جديدة (ل.س.ج)</button>
-    <button class="toggle-btn" id="ch-tog-old" onclick="setChCur('old')">قديمة (ل.س)</button>
-  </div>
-
-  <div class="change-fields">
-    <div class="change-field">
-      <span class="field-label">المبلغ المطلوب</span>
-      <input type="number" inputmode="numeric" pattern="[0-9]*" class="field-input" id="ch-owed-input" placeholder="0" oninput="updateChange()">
-      <span class="field-cur" id="ch-owed-cur">ل.س.ج</span>
-    </div>
-    <div class="field-arrow">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
-    </div>
-    <div class="change-field">
-      <span class="field-label">المبلغ المدفوع</span>
-      <input type="number" inputmode="numeric" pattern="[0-9]*" class="field-input" id="ch-paid-input" placeholder="0" oninput="updateChange()">
-      <span class="field-cur" id="ch-paid-cur">ل.س.ج</span>
-    </div>
-  </div>
-
-  <div class="change-result" id="ch-result" style="display:none">
-    <div class="change-label">الباقي</div>
-    <div style="display:flex;align-items:baseline;justify-content:center;gap:4px">
-      <span class="change-amount" id="ch-change-amt">0</span>
-      <span class="change-cur" id="ch-change-cur">ل.س.ج</span>
-    </div>
-    <p class="change-equiv" id="ch-change-equiv"></p>
-  </div>
-
-  <div class="results" id="ch-results" style="display:none">
-    <div class="results-header">
-      <div class="line"></div>
-      <span class="label">تفاصيل أوراق الباقي</span>
-      <div class="line"></div>
-    </div>
-    <div id="ch-bills"></div>
-    <p class="bill-total" id="ch-total"></p>
-  </div>
-</div>
-
 <!-- Bottom tab bar -->
 <div class="tabbar">
   <div class="tabbar-inner">
-    <button class="tab active" id="tab-calc" onclick="switchApp('calc')">
-      <span class="tab-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="10" y2="10"/><line x1="14" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="10" y2="14"/><line x1="14" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="16" y2="18"/></svg></span>
-      <span class="tab-label">حاسبة العملات</span>
-    </button>
-    <button class="tab" id="tab-change" onclick="switchApp('change')">
+    <button class="tab active" id="tab-change" onclick="switchApp('change')">
       <span class="tab-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></span>
       <span class="tab-label">حاسبة الباقي</span>
+    </button>
+    <button class="tab" id="tab-calc" onclick="switchApp('calc')">
+      <span class="tab-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="10" y2="10"/><line x1="14" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="10" y2="14"/><line x1="14" y1="14" x2="16" y2="14"/><line x1="8" y1="18" x2="16" y2="18"/></svg></span>
+      <span class="tab-label">حاسبة العملات</span>
     </button>
   </div>
 </div>
@@ -202,6 +212,7 @@ var BILLS = [
 
 function fmt(n){ return n.toLocaleString('en-US'); }
 function gel(id){ return document.getElementById(id); }
+function toOld(val, cur){ return cur==='new' ? val*100 : val; }
 
 function renderBills(oldVal, billsEl, totalEl){
   var remaining = oldVal;
@@ -242,7 +253,7 @@ function renderBills(oldVal, billsEl, totalEl){
 }
 
 /* ── App Mode Switch ── */
-var appMode = 'calc';
+var appMode = 'change';
 function switchApp(m){
   appMode = m;
   gel('tab-calc').className = 'tab' + (m==='calc'?' active':'');
@@ -288,69 +299,68 @@ function updateCalc(){
 /* ══════════════════════════
    CHANGE MODE
    ══════════════════════════ */
-var chCur = 'new';
+var owedCur = 'new';
+var paidCur = 'new';
 
-function setChCur(m){
-  chCur = m;
-  gel('ch-tog-new').className = 'toggle-btn' + (m==='new'?' active':'');
-  gel('ch-tog-old').className = 'toggle-btn' + (m==='old'?' active':'');
-  var curText = m==='new' ? 'ل.س.ج' : 'ل.س';
-  gel('ch-owed-cur').textContent = curText;
-  gel('ch-paid-cur').textContent = curText;
-  gel('ch-owed-input').value = '';
-  gel('ch-paid-input').value = '';
+function setFieldCur(field, cur){
+  if(field==='owed'){
+    owedCur = cur;
+    gel('owed-cur-new').className = 'field-cur-btn' + (cur==='new'?' active':'');
+    gel('owed-cur-old').className = 'field-cur-btn' + (cur==='old'?' active':'');
+  } else {
+    paidCur = cur;
+    gel('paid-cur-new').className = 'field-cur-btn' + (cur==='new'?' active':'');
+    gel('paid-cur-old').className = 'field-cur-btn' + (cur==='old'?' active':'');
+  }
   updateChange();
 }
 
 function updateChange(){
-  var owed = parseInt(gel('ch-owed-input').value) || 0;
-  var paid = parseInt(gel('ch-paid-input').value) || 0;
+  var owedRaw = parseInt(gel('ch-owed-input').value) || 0;
+  var paidRaw = parseInt(gel('ch-paid-input').value) || 0;
 
   var resultEl = gel('ch-result');
   var resultsEl = gel('ch-results');
 
-  if(!owed || !paid){
+  if(!owedRaw || !paidRaw){
     resultEl.style.display = 'none';
     resultsEl.style.display = 'none';
     return;
   }
 
+  // Normalize both to old SYP for comparison
+  var owedOld = toOld(owedRaw, owedCur);
+  var paidOld = toOld(paidRaw, paidCur);
+  var changeOld = paidOld - owedOld;
+
   resultEl.style.display = 'block';
-  var change = paid - owed;
   var changeAmtEl = gel('ch-change-amt');
-  var changeCurEl = gel('ch-change-cur');
   var changeEquivEl = gel('ch-change-equiv');
 
-  changeCurEl.textContent = chCur==='new' ? 'ل.س.ج' : 'ل.س';
+  // Show change in new SYP
+  var changeNew = changeOld / 100;
+  gel('ch-change-cur').textContent = 'ل.س.ج';
 
-  if(change < 0){
-    changeAmtEl.textContent = fmt(Math.abs(change)) + '−';
+  if(changeOld < 0){
+    changeAmtEl.textContent = fmt(Math.abs(changeNew)) + '−';
     changeAmtEl.className = 'change-amount negative';
     resultsEl.style.display = 'none';
     changeEquivEl.textContent = 'المبلغ المدفوع أقل من المطلوب';
     return;
   }
 
-  changeAmtEl.textContent = fmt(change);
+  changeAmtEl.textContent = fmt(changeNew);
   changeAmtEl.className = 'change-amount';
+  changeEquivEl.textContent = '= ' + fmt(changeOld) + ' ل.س (قديمة)';
 
-  var oldVal = chCur==='new' ? change*100 : change;
-  var newVal = chCur==='new' ? change : change/100;
-
-  if(chCur==='new'){
-    changeEquivEl.textContent = '= '+fmt(oldVal)+' ل.س (قديمة)';
-  } else {
-    changeEquivEl.textContent = '= '+fmt(newVal)+' ل.س.ج (جديدة)';
-  }
-
-  if(change === 0){
+  if(changeOld === 0){
     resultsEl.style.display = 'none';
     changeEquivEl.textContent = 'لا يوجد باقٍ';
     return;
   }
 
   resultsEl.style.display = 'block';
-  renderBills(oldVal, gel('ch-bills'), gel('ch-total'));
+  renderBills(changeOld, gel('ch-bills'), gel('ch-total'));
 }
 
 /* ── PWA ── */
