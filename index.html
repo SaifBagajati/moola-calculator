@@ -110,6 +110,7 @@ body { display:flex; flex-direction:column; max-width:480px; margin:0 auto; padd
 .install-banner .ib-text strong { font-weight:700; }
 .install-banner .ib-share { display:inline; vertical-align:middle; }
 .install-banner .ib-close { width:28px; height:28px; border-radius:50%; background:rgba(255,255,255,.1); display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; border:none; color:#FFF; font-size:14px; font-family:inherit; }
+.install-banner .ib-install { padding:8px 16px; border-radius:10px; background:#00B856; color:#FFF; border:none; font-size:13px; font-weight:700; cursor:pointer; font-family:inherit; flex-shrink:0; }
 </style>
 </head>
 <body>
@@ -226,7 +227,8 @@ body { display:flex; flex-direction:column; max-width:480px; margin:0 auto; padd
 <!-- Install banner (iOS) -->
 <div class="install-banner" id="install-banner" style="display:none">
   <div class="ib-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div>
-  <div class="ib-text" id="install-text">لتثبيت التطبيق، اضغط <svg class="ib-share" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> ثم <strong>إضافة للشاشة الرئيسية</strong></div>
+  <div class="ib-text" id="install-text"></div>
+  <button class="ib-install" id="install-btn" style="display:none" onclick="doInstall()" data-t="installBtn">تثبيت</button>
   <button class="ib-close" onclick="dismissInstall()">&times;</button>
 </div>
 
@@ -252,7 +254,9 @@ var T = {
     remainder: ' قديمة باقٍ (لا توجد ورقة أصغر)',
     billsTotal: ' ورقة إجمالاً',
     plusRemainder: ' + باقٍ',
-    installText: 'لتثبيت التطبيق، اضغط <svg class="ib-share" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> ثم <strong>إضافة للشاشة الرئيسية</strong>'
+    installTextIos: 'لتثبيت التطبيق، اضغط <svg class="ib-share" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> ثم <strong>إضافة للشاشة الرئيسية</strong>',
+    installTextAndroid: 'أضف التطبيق إلى شاشتك الرئيسية',
+    installBtn: 'تثبيت'
   },
   en: {
     titleChange: 'Change Calculator',
@@ -273,7 +277,9 @@ var T = {
     remainder: ' Old remainder (no smaller bill)',
     billsTotal: ' bills total',
     plusRemainder: ' + remainder',
-    installText: 'To install, tap <svg class="ib-share" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> then <strong>Add to Home Screen</strong>'
+    installTextIos: 'To install, tap <svg class="ib-share" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> then <strong>Add to Home Screen</strong>',
+    installTextAndroid: 'Add this app to your home screen',
+    installBtn: 'Install'
   }
 };
 
@@ -299,7 +305,9 @@ function applyLang(){
   gel('page-title').textContent = appMode==='calc' ? t('titleCalc') : t('titleChange');
 
   // Install banner
-  gel('install-text').innerHTML = t('installText');
+  if(installMode==='ios') gel('install-text').innerHTML = t('installTextIos');
+  else if(installMode==='android') gel('install-text').innerHTML = t('installTextAndroid');
+  gel('install-btn').textContent = t('installBtn');
 
   // Re-run dynamic text
   updateCalc();
@@ -313,14 +321,54 @@ function setLang(l){
 }
 
 /* ── Install banner logic ── */
+var installMode = '';
+var deferredPrompt = null;
+
 (function(){
   var isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  var isStandalone = window.navigator.standalone === true;
+  var isStandalone = window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
   var dismissed = localStorage.getItem('install-dismissed');
-  if(isIos && !isStandalone && !dismissed){
-    document.getElementById('install-banner').style.display = 'flex';
+
+  if(!isStandalone && !dismissed){
+    if(isIos){
+      installMode = 'ios';
+      showInstallBanner();
+    }
   }
 })();
+
+window.addEventListener('beforeinstallprompt', function(e){
+  e.preventDefault();
+  deferredPrompt = e;
+  var dismissed = localStorage.getItem('install-dismissed');
+  if(!dismissed){
+    installMode = 'android';
+    showInstallBanner();
+  }
+});
+
+function showInstallBanner(){
+  var banner = document.getElementById('install-banner');
+  var btn = document.getElementById('install-btn');
+  if(installMode==='ios'){
+    gel('install-text').innerHTML = t('installTextIos');
+    btn.style.display = 'none';
+  } else {
+    gel('install-text').innerHTML = t('installTextAndroid');
+    btn.style.display = 'block';
+    btn.textContent = t('installBtn');
+  }
+  banner.style.display = 'flex';
+}
+
+function doInstall(){
+  if(deferredPrompt){
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(function(){ deferredPrompt = null; });
+  }
+  dismissInstall();
+}
+
 function dismissInstall(){
   document.getElementById('install-banner').style.display = 'none';
   localStorage.setItem('install-dismissed', '1');
