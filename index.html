@@ -103,8 +103,6 @@ body { display:flex; flex-direction:column; max-width:480px; margin:0 auto; padd
 .bill-chip.active { color:#0B1A2E; background:#E6F7EE; border-color:#00B856; }
 .bill-chip.all-chip.active { background:#0B1A2E; color:#FFF; border-color:#0B1A2E; }
 .bill-chip.none-chip.active { background:#94A3B8; color:#FFF; border-color:#94A3B8; }
-.suggested-badge { font-size:10px; font-weight:700; color:#00B856; background:#E6F7EE; padding:3px 7px; border-radius:6px; letter-spacing:.3px; text-transform:uppercase; }
-.field-input[readonly] { color:#5A6B7F; }
 
 /* Bottom tab bar */
 .tabbar { position:fixed; bottom:0; left:0; right:0; background:#FFF; border-top:1px solid #E2E8F0; display:flex; justify-content:center; padding:0; z-index:100; }
@@ -159,10 +157,7 @@ body { display:flex; flex-direction:column; max-width:480px; margin:0 auto; padd
     </div>
     <div class="change-field-group">
       <div class="field-header">
-        <div style="display:flex;align-items:center;gap:8px">
-          <span class="field-label" data-t="paid">المبلغ المدفوع</span>
-          <span class="suggested-badge" id="paid-suggested-badge" style="display:none" data-t="suggested">مقترح</span>
-        </div>
+        <span class="field-label" data-t="paid">المبلغ المدفوع</span>
         <div class="field-cur-toggle">
           <button class="field-cur-btn active" id="paid-cur-new" onclick="setFieldCur('paid','new')" data-t="new">جديدة</button>
           <button class="field-cur-btn" id="paid-cur-old" onclick="setFieldCur('paid','old')" data-t="old">قديمة</button>
@@ -171,7 +166,6 @@ body { display:flex; flex-direction:column; max-width:480px; margin:0 auto; padd
       <div class="change-field">
         <input type="number" inputmode="numeric" pattern="[0-9]*" class="field-input" id="ch-paid-input" placeholder="0" oninput="updateChange()">
       </div>
-      <div class="bill-filter" id="paid-filter"></div>
     </div>
   </div>
 
@@ -185,6 +179,7 @@ body { display:flex; flex-direction:column; max-width:480px; margin:0 auto; padd
   </div>
 
   <div class="results" id="ch-results" style="display:none">
+    <div class="bill-filter" id="change-filter"></div>
     <div class="results-header">
       <div class="line"></div>
       <span class="label" data-t="changeBills">تفاصيل أوراق الباقي</span>
@@ -277,7 +272,6 @@ var T = {
     installBtn: 'تثبيت',
     all: 'الكل',
     none: 'لا شيء',
-    suggested: 'مقترح',
     cantPay: 'لا يمكن الدفع بالفئات المختارة'
   },
   en: {
@@ -304,7 +298,6 @@ var T = {
     installBtn: 'Install',
     all: 'All',
     none: 'None',
-    suggested: 'Suggested',
     cantPay: 'Cannot pay with selected bills'
   }
 };
@@ -337,7 +330,7 @@ function applyLang(){
 
   // Re-render filter chips ("All" label is localized)
   renderFilter('calc-filter', calcSel, setCalcSel);
-  renderFilter('paid-filter', paidSel, setPaidSel);
+  renderFilter('change-filter', changeSel, setChangeSel);
 
   // Re-run dynamic text
   updateCalc();
@@ -504,23 +497,6 @@ function renderFilter(containerId, sel, onChange){
   });
 }
 
-function suggestPaymentOld(owedOld, allowedSet){
-  if(!allowedSet || allowedSet.size === 0 || owedOld <= 0) return 0;
-  var sorted = BILLS.filter(function(b){ return allowedSet.has(b.id); })
-                    .map(function(b){ return b.old; })
-                    .sort(function(a,b){ return b - a; });
-  var remaining = owedOld;
-  var total = 0;
-  sorted.forEach(function(v){
-    var c = Math.floor(remaining / v);
-    if(c > 0){ total += c * v; remaining -= c * v; }
-  });
-  if(remaining > 0){
-    total += sorted[sorted.length - 1];
-  }
-  return total;
-}
-
 function renderBills(oldVal, billsEl, totalEl, allowedSet){
   var pool = (allowedSet && allowedSet.size > 0)
     ? BILLS.filter(function(b){ return allowedSet.has(b.id); })
@@ -618,20 +594,11 @@ function updateCalc(){
    ══════════════════════════ */
 var owedCur = 'new';
 var paidCur = 'new';
-var paidSel = defaultSel();
+var changeSel = defaultSel();
 
-function setPaidSel(s){
-  paidSel = s;
-  renderFilter('paid-filter', paidSel, setPaidSel);
-  var paidInput = gel('ch-paid-input');
-  var badge = gel('paid-suggested-badge');
-  if(isFilterActive(paidSel)){
-    paidInput.setAttribute('readonly', 'true');
-    if(badge) badge.style.display = 'inline-block';
-  } else {
-    paidInput.removeAttribute('readonly');
-    if(badge) badge.style.display = 'none';
-  }
+function setChangeSel(s){
+  changeSel = s;
+  renderFilter('change-filter', changeSel, setChangeSel);
   updateChange();
 }
 
@@ -650,40 +617,19 @@ function setFieldCur(field, cur){
 
 function updateChange(){
   var owedRaw = parseInt(gel('ch-owed-input').value) || 0;
-  var paidInput = gel('ch-paid-input');
+  var paidRaw = parseInt(gel('ch-paid-input').value) || 0;
 
   var resultEl = gel('ch-result');
   var resultsEl = gel('ch-results');
 
-  var owedOld = owedRaw ? toOld(owedRaw, owedCur) : 0;
-  var paidOld;
-
-  if(isFilterActive(paidSel)){
-    if(!owedRaw){
-      paidInput.value = '';
-      resultEl.style.display = 'none';
-      resultsEl.style.display = 'none';
-      return;
-    }
-    paidOld = suggestPaymentOld(owedOld, effectiveAllowed(paidSel));
-    if(paidOld <= 0){
-      paidInput.value = '';
-      resultEl.style.display = 'none';
-      resultsEl.style.display = 'none';
-      return;
-    }
-    var paidDisplay = paidCur === 'new' ? paidOld / 100 : paidOld;
-    paidInput.value = String(paidDisplay);
-  } else {
-    var paidRaw = parseInt(paidInput.value) || 0;
-    if(!owedRaw || !paidRaw){
-      resultEl.style.display = 'none';
-      resultsEl.style.display = 'none';
-      return;
-    }
-    paidOld = toOld(paidRaw, paidCur);
+  if(!owedRaw || !paidRaw){
+    resultEl.style.display = 'none';
+    resultsEl.style.display = 'none';
+    return;
   }
 
+  var owedOld = toOld(owedRaw, owedCur);
+  var paidOld = toOld(paidRaw, paidCur);
   var changeOld = paidOld - owedOld;
 
   resultEl.style.display = 'block';
@@ -712,7 +658,7 @@ function updateChange(){
   }
 
   resultsEl.style.display = 'block';
-  renderBills(changeOld, gel('ch-bills'), gel('ch-total'));
+  renderBills(changeOld, gel('ch-bills'), gel('ch-total'), isFilterActive(changeSel) ? effectiveAllowed(changeSel) : null);
 }
 
 /* ── Init ── */

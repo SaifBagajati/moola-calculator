@@ -1,4 +1,4 @@
-var CACHE = 'moola-calc-v4.4';
+var CACHE = 'moola-calc-v4.5';
 var ASSETS = ['./index.html', './manifest.json', './icon.svg'];
 
 self.addEventListener('install', function(e){
