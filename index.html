@@ -93,6 +93,18 @@ body { display:flex; flex-direction:column; max-width:480px; margin:0 auto; padd
 .bill-total { font-size:11px; color:#94A3B8; text-align:center; margin:10px 0 0; }
 .bill-warning { text-align:center; padding:12px; color:#F59E0B; font-size:13px; font-weight:600; }
 
+/* Bill filter chips */
+.bill-filter { display:flex; flex-direction:column; gap:8px; margin-top:8px; }
+.bill-filter-row { display:flex; flex-direction:column; gap:4px; }
+.bill-row-label { font-size:10px; font-weight:700; color:#94A3B8; letter-spacing:.4px; text-transform:uppercase; }
+.bill-row-chips { display:flex; flex-wrap:wrap; gap:5px; }
+.bill-chip { padding:5px 9px; border-radius:7px; font-size:10px; font-weight:700; cursor:pointer; color:#5A6B7F; border:1px solid #E2E8F0; background:#FFF; font-family:inherit; transition:all .15s; }
+.bill-chip.active { color:#0B1A2E; background:#E6F7EE; border-color:#00B856; }
+.bill-chip.all-chip.active { background:#0B1A2E; color:#FFF; border-color:#0B1A2E; }
+.bill-chip.none-chip.active { background:#94A3B8; color:#FFF; border-color:#94A3B8; }
+.suggested-badge { font-size:10px; font-weight:700; color:#00B856; background:#E6F7EE; padding:3px 7px; border-radius:6px; letter-spacing:.3px; text-transform:uppercase; }
+.field-input[readonly] { color:#5A6B7F; }
+
 /* Bottom tab bar */
 .tabbar { position:fixed; bottom:0; left:0; right:0; background:#FFF; border-top:1px solid #E2E8F0; display:flex; justify-content:center; padding:0; z-index:100; }
 .tabbar-inner { display:flex; width:100%; max-width:480px; }
@@ -146,7 +158,10 @@ body { display:flex; flex-direction:column; max-width:480px; margin:0 auto; padd
     </div>
     <div class="change-field-group">
       <div class="field-header">
-        <span class="field-label" data-t="paid">المبلغ المدفوع</span>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="field-label" data-t="paid">المبلغ المدفوع</span>
+          <span class="suggested-badge" id="paid-suggested-badge" style="display:none" data-t="suggested">مقترح</span>
+        </div>
         <div class="field-cur-toggle">
           <button class="field-cur-btn active" id="paid-cur-new" onclick="setFieldCur('paid','new')" data-t="new">جديدة</button>
           <button class="field-cur-btn" id="paid-cur-old" onclick="setFieldCur('paid','old')" data-t="old">قديمة</button>
@@ -155,6 +170,7 @@ body { display:flex; flex-direction:column; max-width:480px; margin:0 auto; padd
       <div class="change-field">
         <input type="number" inputmode="numeric" pattern="[0-9]*" class="field-input" id="ch-paid-input" placeholder="0" oninput="updateChange()">
       </div>
+      <div class="bill-filter" id="paid-filter"></div>
     </div>
   </div>
 
@@ -193,6 +209,7 @@ body { display:flex; flex-direction:column; max-width:480px; margin:0 auto; padd
       <div class="change-field">
         <input type="number" inputmode="numeric" pattern="[0-9]*" class="field-input" id="calc-input" placeholder="0" oninput="updateCalc()">
       </div>
+      <div class="bill-filter" id="calc-filter"></div>
     </div>
   </div>
   <div style="text-align:center;padding:0 20px 8px">
@@ -251,12 +268,16 @@ var T = {
     paidLess: 'المبلغ المدفوع أقل من المطلوب',
     noChange: 'لا يوجد باقٍ',
     tooSmall: 'المبلغ أقل من أصغر ورقة نقدية (50 قديمة)',
-    remainder: ' قديمة باقٍ (لا توجد ورقة أصغر)',
+    remainder: ' باقٍ (لا توجد ورقة أصغر)',
     billsTotal: ' ورقة إجمالاً',
     plusRemainder: ' + باقٍ',
     installTextIos: 'لتثبيت التطبيق، اضغط <svg class="ib-share" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> ثم <strong>إضافة للشاشة الرئيسية</strong>',
     installTextAndroid: 'أضف التطبيق إلى شاشتك الرئيسية',
-    installBtn: 'تثبيت'
+    installBtn: 'تثبيت',
+    all: 'الكل',
+    none: 'لا شيء',
+    suggested: 'مقترح',
+    cantPay: 'لا يمكن الدفع بالفئات المختارة'
   },
   en: {
     titleChange: 'Change Calculator',
@@ -274,12 +295,16 @@ var T = {
     paidLess: 'Amount paid is less than owed',
     noChange: 'No change',
     tooSmall: 'Amount is less than smallest bill (50 Old)',
-    remainder: ' Old remainder (no smaller bill)',
+    remainder: ' remainder (no smaller bill)',
     billsTotal: ' bills total',
     plusRemainder: ' + remainder',
     installTextIos: 'To install, tap <svg class="ib-share" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> then <strong>Add to Home Screen</strong>',
     installTextAndroid: 'Add this app to your home screen',
-    installBtn: 'Install'
+    installBtn: 'Install',
+    all: 'All',
+    none: 'None',
+    suggested: 'Suggested',
+    cantPay: 'Cannot pay with selected bills'
   }
 };
 
@@ -308,6 +333,10 @@ function applyLang(){
   if(installMode==='ios') gel('install-text').innerHTML = t('installTextIos');
   else if(installMode==='android') gel('install-text').innerHTML = t('installTextAndroid');
   gel('install-btn').textContent = t('installBtn');
+
+  // Re-render filter chips ("All" label is localized)
+  renderFilter('calc-filter', calcSel, setCalcSel);
+  renderFilter('paid-filter', paidSel, setPaidSel);
 
   // Re-run dynamic text
   updateCalc();
@@ -376,27 +405,128 @@ function dismissInstall(){
 
 /* ── Shared ── */
 var BILLS = [
-  {old:50000, label:'500', type:'new'},
-  {old:20000, label:'200', type:'new'},
-  {old:10000, label:'100', type:'new'},
-  {old:5000,  label:'50',  type:'new'},
-  {old:2500,  label:'25',  type:'new'},
-  {old:2000,  label:'2,000', type:'old'},
-  {old:1000,  label:'10',  type:'new'},
-  {old:500,   label:'500', type:'old'},
-  {old:200,   label:'200', type:'old'},
-  {old:100,   label:'100', type:'old'},
-  {old:50,    label:'50',  type:'old'}
+  {id:'n500',  old:50000, label:'500',   type:'new'},
+  {id:'n200',  old:20000, label:'200',   type:'new'},
+  {id:'n100',  old:10000, label:'100',   type:'new'},
+  {id:'n50',   old:5000,  label:'50',    type:'new'},
+  {id:'o5000', old:5000,  label:'5,000', type:'old'},
+  {id:'n25',   old:2500,  label:'25',    type:'new'},
+  {id:'o2000', old:2000,  label:'2,000', type:'old'},
+  {id:'n10',   old:1000,  label:'10',    type:'new'},
+  {id:'o1000', old:1000,  label:'1,000', type:'old'},
+  {id:'o500',  old:500,   label:'500',   type:'old'},
+  {id:'o200',  old:200,   label:'200',   type:'old'},
+  {id:'o100',  old:100,   label:'100',   type:'old'},
+  {id:'o50',   old:50,    label:'50',    type:'old'}
 ];
 
 function fmt(n){ return n.toLocaleString('en-US'); }
 function gel(id){ return document.getElementById(id); }
 function toOld(val, cur){ return cur==='new' ? val*100 : val; }
+function billsForCur(cur){ return BILLS.filter(function(b){ return b.type === cur; }); }
+function defaultSel(){ return { 'new': null, 'old': null }; } // null per row = "All"
+function isFilterActive(sel){ return sel['new'] !== null || sel['old'] !== null; }
+function effectiveAllowed(sel){
+  var s = new Set();
+  ['new','old'].forEach(function(cur){
+    var rowSel = sel[cur];
+    if(rowSel === null){
+      billsForCur(cur).forEach(function(b){ s.add(b.id); });
+    } else if(rowSel === 'none'){
+      // include nothing from this row
+    } else {
+      rowSel.forEach(function(v){ s.add(v); });
+    }
+  });
+  return s;
+}
 
-function renderBills(oldVal, billsEl, totalEl){
+function renderFilter(containerId, sel, onChange){
+  var container = gel(containerId);
+  if(!container) return;
+  container.innerHTML = '';
+  ['new','old'].forEach(function(cur){
+    var row = document.createElement('div');
+    row.className = 'bill-filter-row';
+    var label = document.createElement('span');
+    label.className = 'bill-row-label';
+    label.textContent = t(cur);
+    row.appendChild(label);
+    var chipsWrap = document.createElement('div');
+    chipsWrap.className = 'bill-row-chips';
+    var bills = billsForCur(cur);
+    var rowSel = sel[cur];
+    var allActive = (rowSel === null);
+    var all = document.createElement('button');
+    all.type = 'button';
+    all.className = 'bill-chip all-chip' + (allActive?' active':'');
+    all.textContent = t('all');
+    all.onclick = function(){
+      var next = Object.assign({}, sel);
+      next[cur] = null;
+      onChange(next);
+    };
+    chipsWrap.appendChild(all);
+    bills.forEach(function(b){
+      var chip = document.createElement('button');
+      chip.type = 'button';
+      var isActive = (rowSel instanceof Set) && rowSel.has(b.id);
+      chip.className = 'bill-chip' + (isActive?' active':'');
+      chip.textContent = b.label;
+      chip.onclick = function(){
+        var next = Object.assign({}, sel);
+        var nextRow;
+        if(rowSel instanceof Set){
+          nextRow = new Set(rowSel);
+          if(nextRow.has(b.id)) nextRow.delete(b.id); else nextRow.add(b.id);
+          if(nextRow.size === 0) nextRow = null;
+        } else {
+          nextRow = new Set([b.id]);
+        }
+        next[cur] = nextRow;
+        onChange(next);
+      };
+      chipsWrap.appendChild(chip);
+    });
+    var none = document.createElement('button');
+    none.type = 'button';
+    none.className = 'bill-chip none-chip' + (rowSel === 'none' ? ' active' : '');
+    none.textContent = t('none');
+    none.onclick = function(){
+      var next = Object.assign({}, sel);
+      next[cur] = 'none';
+      onChange(next);
+    };
+    chipsWrap.appendChild(none);
+    row.appendChild(chipsWrap);
+    container.appendChild(row);
+  });
+}
+
+function suggestPaymentOld(owedOld, allowedSet){
+  if(!allowedSet || allowedSet.size === 0 || owedOld <= 0) return 0;
+  var sorted = BILLS.filter(function(b){ return allowedSet.has(b.id); })
+                    .map(function(b){ return b.old; })
+                    .sort(function(a,b){ return b - a; });
+  var remaining = owedOld;
+  var total = 0;
+  sorted.forEach(function(v){
+    var c = Math.floor(remaining / v);
+    if(c > 0){ total += c * v; remaining -= c * v; }
+  });
+  if(remaining > 0){
+    total += sorted[sorted.length - 1];
+  }
+  return total;
+}
+
+function renderBills(oldVal, billsEl, totalEl, allowedSet){
+  var pool = (allowedSet && allowedSet.size > 0)
+    ? BILLS.filter(function(b){ return allowedSet.has(b.id); })
+    : BILLS;
   var remaining = oldVal;
   var result = [];
-  BILLS.forEach(function(bill){
+  pool.forEach(function(bill){
     if(remaining >= bill.old){
       var count = Math.floor(remaining / bill.old);
       remaining -= count * bill.old;
@@ -426,7 +556,9 @@ function renderBills(oldVal, billsEl, totalEl){
   });
 
   if(remaining > 0){
-    billsEl.innerHTML += '<div class="bill-warning">'+fmt(remaining)+t('remainder')+'</div>';
+    var newEq = remaining / 100;
+    var newStr = newEq % 1 === 0 ? fmt(newEq) : newEq.toFixed(2);
+    billsEl.innerHTML += '<div class="bill-warning">'+fmt(remaining)+' '+t('old')+' / '+newStr+' '+t('new')+t('remainder')+'</div>';
   }
   totalEl.textContent = totalCount + t('billsTotal') + (remaining > 0 ? t('plusRemainder') : '');
 }
@@ -446,12 +578,18 @@ function switchApp(m){
    CALC MODE
    ══════════════════════════ */
 var calcCur = 'new';
+var calcSel = defaultSel();
+
+function setCalcSel(s){
+  calcSel = s;
+  renderFilter('calc-filter', calcSel, setCalcSel);
+  updateCalc();
+}
 
 function setCur(m){
   calcCur = m;
   gel('tog-new').className = 'toggle-btn' + (m==='new'?' active':'');
   gel('tog-old').className = 'toggle-btn' + (m==='old'?' active':'');
-  gel('calc-input').value = '';
   updateCalc();
 }
 
@@ -471,7 +609,7 @@ function updateCalc(){
   var resultsEl = gel('calc-results');
   if(!raw){ resultsEl.style.display='none'; return; }
   resultsEl.style.display='block';
-  renderBills(oldVal, gel('calc-bills'), gel('calc-total'));
+  renderBills(oldVal, gel('calc-bills'), gel('calc-total'), isFilterActive(calcSel) ? effectiveAllowed(calcSel) : null);
 }
 
 /* ══════════════════════════
@@ -479,6 +617,22 @@ function updateCalc(){
    ══════════════════════════ */
 var owedCur = 'new';
 var paidCur = 'new';
+var paidSel = defaultSel();
+
+function setPaidSel(s){
+  paidSel = s;
+  renderFilter('paid-filter', paidSel, setPaidSel);
+  var paidInput = gel('ch-paid-input');
+  var badge = gel('paid-suggested-badge');
+  if(isFilterActive(paidSel)){
+    paidInput.setAttribute('readonly', 'true');
+    if(badge) badge.style.display = 'inline-block';
+  } else {
+    paidInput.removeAttribute('readonly');
+    if(badge) badge.style.display = 'none';
+  }
+  updateChange();
+}
 
 function setFieldCur(field, cur){
   if(field==='owed'){
@@ -495,19 +649,40 @@ function setFieldCur(field, cur){
 
 function updateChange(){
   var owedRaw = parseInt(gel('ch-owed-input').value) || 0;
-  var paidRaw = parseInt(gel('ch-paid-input').value) || 0;
+  var paidInput = gel('ch-paid-input');
 
   var resultEl = gel('ch-result');
   var resultsEl = gel('ch-results');
 
-  if(!owedRaw || !paidRaw){
-    resultEl.style.display = 'none';
-    resultsEl.style.display = 'none';
-    return;
+  var owedOld = owedRaw ? toOld(owedRaw, owedCur) : 0;
+  var paidOld;
+
+  if(isFilterActive(paidSel)){
+    if(!owedRaw){
+      paidInput.value = '';
+      resultEl.style.display = 'none';
+      resultsEl.style.display = 'none';
+      return;
+    }
+    paidOld = suggestPaymentOld(owedOld, effectiveAllowed(paidSel));
+    if(paidOld <= 0){
+      paidInput.value = '';
+      resultEl.style.display = 'none';
+      resultsEl.style.display = 'none';
+      return;
+    }
+    var paidDisplay = paidCur === 'new' ? paidOld / 100 : paidOld;
+    paidInput.value = String(paidDisplay);
+  } else {
+    var paidRaw = parseInt(paidInput.value) || 0;
+    if(!owedRaw || !paidRaw){
+      resultEl.style.display = 'none';
+      resultsEl.style.display = 'none';
+      return;
+    }
+    paidOld = toOld(paidRaw, paidCur);
   }
 
-  var owedOld = toOld(owedRaw, owedCur);
-  var paidOld = toOld(paidRaw, paidCur);
   var changeOld = paidOld - owedOld;
 
   resultEl.style.display = 'block';
