@@ -97,8 +97,9 @@ body { display:flex; flex-direction:column; max-width:480px; margin:0 auto; padd
 .bill-filter { display:flex; flex-direction:column; gap:8px; margin-top:8px; }
 .bill-filter-row { display:flex; flex-direction:column; gap:4px; }
 .bill-row-label { font-size:11px; font-weight:700; color:#94A3B8; letter-spacing:.4px; text-transform:uppercase; }
-.bill-row-chips { display:flex; flex-wrap:wrap; gap:6px; }
-.bill-chip { padding:6px 10px; border-radius:8px; font-size:11px; font-weight:700; cursor:pointer; color:#5A6B7F; border:1px solid #E2E8F0; background:#FFF; font-family:inherit; transition:all .15s; }
+.bill-row-chips { display:flex; flex-wrap:nowrap; gap:6px; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding:2px 0; margin:0 -20px; padding-left:20px; padding-right:20px; }
+.bill-row-chips::-webkit-scrollbar { display:none; }
+.bill-chip { padding:7px 12px; border-radius:8px; font-size:12px; font-weight:700; cursor:pointer; color:#5A6B7F; border:1px solid #E2E8F0; background:#FFF; font-family:inherit; transition:all .15s; flex-shrink:0; }
 .bill-chip.active { color:#0B1A2E; background:#E6F7EE; border-color:#00B856; }
 .bill-chip.all-chip.active { background:#0B1A2E; color:#FFF; border-color:#0B1A2E; }
 .bill-chip.none-chip.active { background:#94A3B8; color:#FFF; border-color:#94A3B8; }
